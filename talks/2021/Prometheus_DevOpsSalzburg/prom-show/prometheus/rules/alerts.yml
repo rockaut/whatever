@@ -1,0 +1,53 @@
+groups:
+#
+- name: meta
+  rules:
+    - alert: DeadMansSwitch
+      expr: vector(1)
+      labels:
+        severity: none
+      annotations:
+        description: This is a DeadMansSwitch meant to ensure that the entire Alerting pipeline is functional.
+        summary: Alerting DeadMansSwitch
+    - alert: fism-test-shouldFire
+      expr: vector(1) == 1
+      labels:
+        severity: none
+      annotations:
+        description: This is just a test which should always fire
+        summary: Just a test which always fires
+    - alert: fism-test-shouldNotFire
+      expr: vector(1) != 1
+      labels:
+        severity: none
+      annotations:
+        description: This is just a test which should never fire
+        summary: Just a test which never fires
+#
+- name: alertmanager
+  rules:
+    - alert: AlertmanagerDown
+      expr: absent(up{job="alertmanager"}== 1)
+      for: 15m
+      labels:
+        severity: critical
+      annotations:
+        message: Alertmanager has disappeared from Prometheus target discovery.
+    - alert: AlertmanagerDownOrMissing
+      expr: label_replace(alertmanager_build_info{job="alertmanager"},"job", "alertmanager", "alertmanager", "(.*)")
+        / on(job) group_right() sum by(job) (up{job="alertmanager"}) != 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        description: An unexpected number of Alertmanagers are scraped or Alertmanagers
+          disappeared from discovery.
+        summary: Alertmanager down or missing
+    - alert: AlertmanagerFailedReload
+      expr: alertmanager_config_last_reload_successful{job="alertmanager"} == 0
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        description: Reloading Alertmanager's configuration has failed.
+        summary: Alertmanager's configuration reload failed

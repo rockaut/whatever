@@ -1,0 +1,39 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+  - scheme: http
+    static_configs:
+    - targets:
+      - "alertmanager:9093"
+
+rule_files:
+  - rules/alerts.yml
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets:
+          - '127.0.0.1:9090'
+        labels:
+          group: 'prometheus'
+
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: 
+          - 'alertmanager:9093'
+        labels:
+          group: 'alertmanager'
+
+  - job_name: 'nodes'
+    static_configs:
+      - targets: 
+          - node_exporter:9100
+          - demo.robustperception.io:9100 # <- this fails, IDK why
+
+  - job_name: 'remotes'
+    static_configs:
+      - targets: 
+          - demo.robustperception.io:9100
